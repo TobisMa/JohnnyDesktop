@@ -1404,7 +1404,7 @@ procedure Tfrm_gmain.FormResize(Sender: TObject);
       ratio: double;
 begin
        ratio := min(ClientWidth / curWidth.ToDouble(), ClientHeight / curHeight.ToDouble());
-       ShowMessage(ratio.ToString());
+       // ShowMessage(ratio.ToString());
        frm_gmain.ScaleBy(Trunc(ratio * 100), 100);
        curWidth := ClientWidth;
        curHeight:= ClientHeight;
