@@ -48,6 +48,11 @@ uses
 
 type
 
+   TLayoutRec = record
+      x,y,w,h:integer;
+      FontSize:integer;
+   end;
+
   { Tfrm_gmain }
 
   Tfrm_gmain = class(TForm)
@@ -219,8 +224,9 @@ type
     procedure ShowMPM;
     procedure BlinkShape(the_shape:TShape);
     procedure ChangeMode(Sender: TObject);
-    
 
+    procedure Scale( horizontally:double = 1; vertically:double = 1);
+    procedure RememberDefaultLayout;
 
     
   private
@@ -287,6 +293,12 @@ var
 
   curWidth: Integer = 1210;
   curHeight: Integer = 847;
+
+  DefaultLayout:array of TLayoutRec;
+
+  LayoutMemorized:boolean = false;
+  IncreaseFormSize:boolean;
+  CurrentScale:double = 1;
   
 
   // =============================================================
@@ -1403,12 +1415,62 @@ procedure Tfrm_gmain.FormResize(Sender: TObject);
   var
       ratio: double;
 begin
-       ratio := min(ClientWidth / curWidth.ToDouble(), ClientHeight / curHeight.ToDouble());
-       // ShowMessage(ratio.ToString());
-       frm_gmain.ScaleBy(Trunc(ratio * 100), 100);
-       curWidth := ClientWidth;
-       curHeight:= ClientHeight;
+       frm_gmain.Scale(ClientWidth / curWidth.ToDouble(), ClientHeight / curHeight.ToDouble());
 end;
+
+procedure Tfrm_gmain.Scale( horizontally:double = 1; vertically:double = 1);
+var
+   i:integer;
+begin
+   if LayoutMemorized = false then begin
+      RememberDefaultLayout;
+      LayoutMemorized:= true;
+   end;
+
+   Width:=  Trunc( DefaultLayout[ComponentCount].w * horizontally );
+   Height:= Trunc( DefaultLayout[ComponentCount].h * vertically );
+   Font.Size:= DefaultLayout[ComponentCount].FontSize;
+
+   for i:= 0 to ComponentCount-1 do begin
+      if Components[i] is TControl then begin
+         with Components[i] as TControl do begin
+            Left:=   Trunc( DefaultLayout[i].x * horizontally);
+            Top:=    Trunc( DefaultLayout[i].y * vertically );
+            Width:=  Trunc( DefaultLayout[i].w * horizontally );
+            Height:= Trunc( DefaultLayout[i].h * vertically );
+            if Font <> nil then Font.Size:= Trunc( DefaultLayout[i].FontSize * min(horizontally, vertically));
+         end;
+      end;
+   end;
+end;
+
+procedure Tfrm_gmain.RememberDefaultLayout;
+var
+   i:integer;
+begin
+   SetLength(DefaultLayout,ComponentCount+1);
+
+   DefaultLayout[ComponentCount].x:= Left;
+   DefaultLayout[ComponentCount].y:= Top;
+   DefaultLayout[ComponentCount].w:= Width;
+   DefaultLayout[ComponentCount].h:= Height;
+   DefaultLayout[ComponentCount].FontSize:= Font.Size;
+
+   for i:= 0 to ComponentCount-1 do begin
+      if Components[i] is TControl then begin
+         with Components[i] as TControl do begin
+            DefaultLayout[i].x:= Left;
+            DefaultLayout[i].y:= Top;
+            DefaultLayout[i].w:= Width;
+            DefaultLayout[i].h:= Height;
+            DefaultLayout[i].FontSize:= Font.Size;
+            if Font <> nil then DefaultLayout[i].FontSize:= Font.Size
+               else DefaultLayout[i].FontSize:= 0;
+         end;
+      end;
+   end;
+end;
+
 
 procedure Tfrm_gmain.Image2Click(Sender: TObject);
 begin
